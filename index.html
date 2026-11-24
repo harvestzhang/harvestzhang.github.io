@@ -33,23 +33,16 @@
   ::selection { background: var(--ink); color: var(--sky-bottom); }
 
   /* ---------- Fog ---------- */
-  .fog { position: fixed; inset: -30vh -30vw; z-index: -1; pointer-events: none; filter: blur(40px); }
-  .fog.far {
-    background:
-      radial-gradient(28% 22% at 20% 30%, rgba(255,255,255,.26), transparent 70%),
-      radial-gradient(32% 20% at 70% 22%, rgba(255,255,255,.22), transparent 70%),
-      radial-gradient(26% 18% at 45% 60%, rgba(255,255,255,.15), transparent 70%);
-    animation: drift-a 70s ease-in-out infinite alternate;
+  /* Each cloud is its own soft patch that drifts in from past the right edge and fully out past the left,
+     then starts again. Speeds, sizes and start times vary so they never line up. */
+  .sky { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+  .cloud {
+    position: absolute; left: 0; top: var(--y); width: var(--w); height: var(--h);
+    background: radial-gradient(closest-side, rgba(255,255,255,var(--a)), transparent);
+    filter: blur(28px); will-change: transform;
+    animation: cloud-drift var(--dur) linear var(--delay) infinite;
   }
-  .fog.near {
-    background:
-      radial-gradient(22% 14% at 60% 40%, rgba(255,255,255,.18), transparent 70%),
-      radial-gradient(30% 16% at 30% 75%, rgba(255,255,255,.13), transparent 70%),
-      radial-gradient(20% 12% at 85% 65%, rgba(255,255,255,.15), transparent 70%);
-    animation: drift-b 45s ease-in-out infinite alternate;
-  }
-  @keyframes drift-a { to { transform: translate3d(8vw, 2vh, 0); } }
-  @keyframes drift-b { to { transform: translate3d(-10vw, -3vh, 0); } }
+  @keyframes cloud-drift { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
   .grain {
     position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .07; mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -160,12 +153,20 @@
     main { padding-right: 40px; }
   }
   @media (max-width: 520px) { .d { display: none; } li a { justify-content: space-between; } }
-  @media (prefers-reduced-motion: reduce) { .fog { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .cloud { animation-play-state: paused; } }
 </style>
 </head>
 <body>
-  <div class="fog far"></div>
-  <div class="fog near"></div>
+  <div class="sky" aria-hidden="true">
+    <div class="cloud" style="--y:4vh; --w:70vw; --h:34vh; --a:0.3; --dur:150s; --delay:-20s"></div>
+    <div class="cloud" style="--y:30vh; --w:60vw; --h:30vh; --a:0.24; --dur:170s; --delay:-95s"></div>
+    <div class="cloud" style="--y:58vh; --w:75vw; --h:32vh; --a:0.2; --dur:160s; --delay:-130s"></div>
+    <div class="cloud" style="--y:14vh; --w:45vw; --h:20vh; --a:0.26; --dur:95s; --delay:-10s"></div>
+    <div class="cloud" style="--y:44vh; --w:40vw; --h:18vh; --a:0.22; --dur:85s; --delay:-50s"></div>
+    <div class="cloud" style="--y:70vh; --w:50vw; --h:22vh; --a:0.2; --dur:105s; --delay:-75s"></div>
+    <div class="cloud" style="--y:22vh; --w:30vw; --h:14vh; --a:0.24; --dur:65s; --delay:-30s"></div>
+    <div class="cloud" style="--y:52vh; --w:34vw; --h:15vh; --a:0.2; --dur:72s; --delay:-5s"></div>
+  </div>
   <div class="grain"></div>
 
   <!-- Instruments -->
@@ -284,7 +285,9 @@
   const frame = t => {
     const target = altFor(scrollY);
     alt += (target - alt) * (reduce ? 1 : .14);
-    const off = (alt * PX) % 50;   // ticks repeat every 50px, so wrap the offset
+    // gentle wander, like holding altitude by hand (two out-of-step waves so it never quite repeats)
+    const wander = reduce ? 0 : 110 * Math.sin(t / 3300) + 60 * Math.sin(t / 1900 + 1.3);
+    const off = ((alt + wander) * PX) % 50;   // ticks repeat every 50px, so wrap the offset
     ticks.style.backgroundPosition = `14px ${off}px, 14px ${off}px`;
 
 
