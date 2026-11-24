@@ -145,7 +145,8 @@
   .card p { font-size: 16px; line-height: 1.45; color: var(--muted); margin-top: 6px; }
   .card .meta { margin-top: 12px; color: var(--dim); font-size: 10px; }
 
-  footer { margin-top: 96px; display: flex; justify-content: space-between; }
+  footer { margin-top: 96px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; }
+  footer > :last-child { text-align: right; }
 
   @media (max-width: 820px) {
     .hdg, .hdg-caret { display: none; }
@@ -220,7 +221,7 @@
     </section>
     -->
 
-    <footer class="label"><span>© 2026 Harvest Zhang</span><span>harvestzhang.com</span></footer>
+    <footer class="label"><span>© 2026 Harvest Zhang</span><time id="zulu" title="Day of month, hour and minute in UTC"></time><span>harvestzhang.com</span></footer>
   </main>
 
   <!-- Direct-To glyph: a D with an arrow through it -->
@@ -275,6 +276,15 @@
   mail.addEventListener('click', copy);
   mail.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copy(); } });
   text.addEventListener('copy', e => { e.preventDefault(); e.clipboardData.setData('text/plain', addr()); });
+
+  /* Zulu time, METAR style: DDHHMMZ in UTC, kept current with the system clock */
+  const zulu = document.getElementById('zulu');
+  const tickZulu = () => {
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    zulu.textContent = `${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}Z`;
+    zulu.dateTime = d.toISOString().slice(0, 16) + 'Z';
+  };
+  tickZulu(); setInterval(tickZulu, 1000);
 
   /* Inputs */
   let mx = .5;
