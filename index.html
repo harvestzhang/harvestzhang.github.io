@@ -289,22 +289,6 @@
   let mx = .5;
   addEventListener('pointermove', e => mx = e.clientX / innerWidth, { passive: true });
 
-  // Phones: bank the device to turn. Roll is gamma in portrait; in landscape the device axes
-  // swap, so it's beta (sign depends on which way the phone was rotated). ±30° of roll spans the tape.
-  const onTilt = e => {
-    if (e.gamma == null) return;
-    const a = (screen.orientation ? screen.orientation.angle : window.orientation) || 0;
-    const roll = a === 90 ? e.beta : (a === 270 || a === -90) ? -e.beta : a === 180 ? -e.gamma : e.gamma;
-    mx = .5 + Math.max(-30, Math.min(30, roll)) / 60;
-  };
-  const DOE = window.DeviceOrientationEvent;
-  if (DOE) {
-    addEventListener('deviceorientation', onTilt);   // Android delivers events right away
-    // iOS sends nothing until permission is granted, and only asks from a user gesture: ask on the first tap
-    if (typeof DOE.requestPermission === 'function')
-      addEventListener('click', () => DOE.requestPermission().catch(() => {}), { once: true });
-  }
-
   /* Loop */
   let alt = altFor(scrollY), hdg = 280;
   const frame = t => {
